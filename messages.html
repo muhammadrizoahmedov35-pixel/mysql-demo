@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galaxy 3.0 — Messages</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    background: radial-gradient(
+      ellipse at top, #30205d, #0b0920 65%, #05040d
+    );
+  }
+
+  .container {
+    max-width: 650px;
+    margin: auto;
+    padding: 24px 16px 60px;
+  }
+
+  header { text-align: center; margin-bottom: 28px; }
+  .planet { font-size: 58px; }
+  h1 { color: #d8b4fe; letter-spacing: 2px; margin: 8px 0; }
+  .subtitle { color: #b5a8d0; }
+
+  .panel {
+    background: rgba(22,16,48,.94);
+    border: 1px solid #5a408c;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 30px #7c3aed20;
+  }
+
+  .userbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .username { font-weight: bold; color: #d8b4fe; }
+  .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  button, .admin-link {
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 15px;
+    background: #7c3aed;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  button:disabled { opacity: .6; cursor: wait; }
+  .secondary { background: #342650; }
+
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    resize: vertical;
+    background: #17112f;
+    border: 1px solid #57457d;
+    border-radius: 12px;
+    padding: 14px;
+    color: white;
+    font: inherit;
+    margin-top: 14px;
+  }
+
+  textarea:focus { outline: 2px solid #a78bfa; }
+
+  .send { width: 100%; margin-top: 12px; padding: 14px; }
+  .message {
+    background: #1b1438;
+    border: 1px solid #45346e;
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  .message-name { color: #c4b5fd; font-weight: bold; }
+  .message-text {
+    margin: 10px 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .date { color: #a89abb; font-size: 12px; }
+  .status { color: #c4b5fd; font-size: 14px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<main class="container">
+  <header>
+    <div class="planet">🪐</div>
+    <h1>GALAXY 3.0</h1>
+    <p class="subtitle">Galaktikadagi xabarlar ✨</p>
+  </header>
+
+  <section class="panel">
+    <div class="userbar">
+      <div>
+        <div class="status">Sizning akkauntingiz</div>
+        <div class="username" id="myName">Tekshirilmoqda...</div>
+      </div>
+      <div class="buttons">
+        <a href="/admin.html" id="adminLink"
+           class="admin-link hidden">🛡️ Admin</a>
+        <button id="logout" class="secondary">Chiqish</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>✍️ Xabar yozish</h2>
+    <form id="messageForm">
+      <textarea id="messageInput"
+        placeholder="Xabaringizni shu yerga yozing..."
+        maxlength="1000" required></textarea>
+      <button id="sendButton" class="send" type="submit">
+        Xabar yuborish 🚀
+      </button>
+    </form>
+    <p class="status" id="sendStatus" role="status"></p>
+  </section>
+
+  <section class="panel">
+    <h2>🌌 Xabarlar</h2>
+    <div id="messageList">
+      <p class="status">Yuklanmoqda...</p>
+    </div>
+    <button id="refresh" class="secondary">
+      🔄 Yangilash
+    </button>
+  </section>
+</main>
+
+<script>
+  const myName = document.getElementById("myName");
+  const adminLink = document.getElementById("adminLink");
+  const messageForm = document.getElementById("messageForm");
+  const messageInput = document.getElementById("messageInput");
+  const messageList = document.getElementById("messageList");
+  const sendButton = document.getElementById("sendButton");
+  const sendStatus = document.getElementById("sendStatus");
+
+  async function checkLogin() {
+    try {
+      const response = await fetch("/auth?action=me", {
+        credentials: "same-origin",
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        window.location.replace("/login.html");
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data.authenticated || !data.user) {
+        window.location.replace("/login.html");
+        return;
+      }
+
+      myName.textContent = data.user.display_name;
+
+      if (["admin", "superadmin"].includes(data.user.role)) {
+        adminLink.classList.remove("hidden");
+      }
+
+      messageForm.classList.remove("hidden");
+      await loadMessages();
+
+    } catch {
+      myName.textContent = "Serverga ulanib bo‘lmadi";
+      messageForm.classList.add("hidden");
+    }
+  }
+
+  async function loadMessages() {
+    try {
+      const response = await fetch("/messages", {
+        cache: "no-store"
+      });
+
+      if (!response.ok) throw new Error();
+
+      const messages = await response.json();
+      messageList.replaceChildren();
+
+      if (messages.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "status";
+        empty.textContent = "Hali xabarlar yo‘q ✨";
+        messageList.appendChild(empty);
+        return;
+      }
+
+      messages.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "message";
+
+        const name = document.createElement("div");
+        name.className = "message-name";
+        name.textContent = "✦ " + item.display_name;
+
+        const text = document.createElement("div");
+        text.className = "message-text";
+        text.textContent = item.message;
+
+        const date = document.createElement("div");
+        date.className = "date";
+
+        const parsedDate = new Date(item.created_at);
+        date.textContent = Number.isNaN(parsedDate.getTime())
+          ? ""
+          : parsedDate.toLocaleString("uz-UZ", {
+              timeZone: "Europe/Istanbul",
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+
+        card.append(name, text, date);
+        messageList.appendChild(card);
+      });
+
+    } catch {
+      messageList.textContent =
+        "Xabarlarni yuklashda xatolik yuz berdi.";
+    }
+  }
+
+  messageForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const message = messageInput.value.trim();
+    if (!message || message.length > 1000) return;
+
+    sendButton.disabled = true;
+    sendStatus.textContent = "Yuborilmoqda...";
+
+    try {
+      const response = await fetch("/messages", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Xatolik");
+      }
+
+      messageInput.value = "";
+      sendStatus.textContent = "Xabar yuborildi! ✅";
+      await loadMessages();
+
+    } catch (error) {
+      sendStatus.textContent = error.message;
+    } finally {
+      sendButton.disabled = false;
+    }
+  });
+
+  document.getElementById("refresh")
+    .addEventListener("click", loadMessages);
+
+  document.getElementById("logout")
+    .addEventListener("click", async () => {
+      try {
+        const response = await fetch("/auth?action=logout", {
+          method: "POST",
+          credentials: "same-origin"
+        });
+        if (!response.ok) throw new Error();
+        window.location.replace("/login.html");
+      } catch {
+        sendStatus.textContent =
+          "Chiqishda xatolik. Qayta urinib ko‘ring.";
+      }
+    });
+
+  messageForm.classList.add("hidden");
+  checkLogin();
+</script>
+
+</body>
+</html>

@@ -168,6 +168,60 @@
     @media (prefers-reduced-motion: reduce) {
       .stars, .planet { animation: none; }
     }
+   /* Galaxy 2.0 — Mehmonlar yulduzlari */
+
+#galaxy {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  margin: 20px 0;
+  overflow: hidden;
+  border: 1px solid #414478;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at center,
+      #26245a 0%,
+      #11152e 55%,
+      #080b1b 100%);
+  box-shadow: inset 0 0 60px #6545ff22;
+}
+
+.galaxy-star {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #d8b4fe;
+  box-shadow:
+    0 0 10px #c084fc,
+    0 0 25px #8b5cf6;
+  cursor: pointer;
+  animation: twinkle 2.5s ease-in-out infinite alternate;
+}
+
+.galaxy-star:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 5px;
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
+#star-info {
+  padding: 12px;
+  text-align: center;
+  color: #ddd6fe;
+  font-size: 14px;
+} 
   </style>
 </head>
 <body>

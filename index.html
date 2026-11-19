@@ -59,7 +59,7 @@ async function loadNames() {
 
     names.forEach(item => {
       const p = document.createElement("p");
-      p.textContent = item.name;
+     p.textContent = item.name + " 🌍 " + (item.country || "Unknown"); 
       list.appendChild(p);
     });
   } catch (error) {

@@ -42,5 +42,27 @@
     <h3>Mehmonlar ro'yxati</h3>
     <div id="list"></div>
   </div>
+  
+<script>
+const input = document.getElementById("name");
+const list = document.getElementById("list");
+const button = document.querySelector("button");
+
+button.addEventListener("click", function () {
+  const name = input.value.trim();
+
+  if (!name) {
+    alert("Iltimos, ismingizni kiriting!");
+    return;
+  }
+
+  const item = document.createElement("p");
+  item.textContent = name;
+  list.appendChild(item);
+
+  input.value = "";
+});
+</script>
+
 </body>
 </html>

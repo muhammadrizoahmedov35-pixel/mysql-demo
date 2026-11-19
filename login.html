@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+  <title>Galaxy 3.0 — Login</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% 20%,
+          #30205d, #0b0920 65%, #05040d);
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 390px;
+      padding: 30px 24px;
+      border: 1px solid #5a408c;
+      border-radius: 22px;
+      background: rgba(22, 16, 48, .94);
+      box-shadow: 0 0 45px #7c3aed30;
+      text-align: center;
+    }
+
+    .planet {
+      font-size: 58px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #d8b4fe;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      color: #b5a8d0;
+      font-size: 14px;
+      margin-bottom: 25px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      border: 1px solid #57457d;
+      border-radius: 12px;
+      background: #17112f;
+      color: white;
+      font-size: 16px;
+    }
+
+    input:focus {
+      outline: 2px solid #a78bfa;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 14px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(
+        135deg, #7c3aed, #a855f7
+      );
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .switch {
+      margin-top: 20px;
+      color: #c4b5fd;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .error {
+      color: #fca5a5;
+      font-size: 14px;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <main class="card">
+    <div class="planet">🪐</div>
+    <h1>GALAXY 3.0</h1>
+    <p class="subtitle" id="subtitle">
+      Galaktikaga xush kelibsiz!
+    </p>
+
+    <form id="form">
+      <div id="nameField" class="hidden">
+        <input
+          id="displayName"
+          placeholder="Ismingiz"
+          maxlength="100"
+          autocomplete="name">
+      </div>
+
+      <input
+        id="username"
+        placeholder="Login (masalan: ali_01)"
+        minlength="3"
+        maxlength="30"
+        pattern="[a-z0-9_]{3,30}"
+        autocomplete="username"
+        required>
+
+      <input
+        id="password"
+        type="password"
+        placeholder="Parol (kamida 12 belgi)"
+        minlength="12"
+        maxlength="128"
+        autocomplete="current-password"
+        required>
+
+      <button id="submit" type="submit">
+        Kirish 🚀
+      </button>
+    </form>
+
+    <p id="error" class="error" role="status"></p>
+
+    <p class="switch" id="switch">
+      Akkauntingiz yo‘qmi? Ro‘yxatdan o‘ting
+    </p>
+  </main>
+
+  <script>
+    let registerMode = false;
+
+    const form = document.getElementById("form");
+    const nameField = document.getElementById("nameField");
+    const displayName = document.getElementById("displayName");
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+    const submit = document.getElementById("submit");
+    const switchButton = document.getElementById("switch");
+    const errorBox = document.getElementById("error");
+    const subtitle = document.getElementById("subtitle");
+
+    function setMode(register) {
+      registerMode = register;
+      nameField.classList.toggle("hidden", !register);
+      displayName.required = register;
+      password.autocomplete = register
+        ? "new-password"
+        : "current-password";
+
+      submit.textContent = register
+        ? "Ro‘yxatdan o‘tish ✨"
+        : "Kirish 🚀";
+
+      switchButton.textContent = register
+        ? "Akkauntingiz bormi? Kirish"
+        : "Akkauntingiz yo‘qmi? Ro‘yxatdan o‘ting";
+
+      subtitle.textContent = register
+        ? "Galaktikada o‘z akkauntingizni yarating"
+        : "Galaktikaga xush kelibsiz!";
+
+      errorBox.textContent = "";
+    }
+
+    switchButton.addEventListener("click", () => {
+      setMode(!registerMode);
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorBox.textContent = "";
+      submit.disabled = true;
+
+      const action = registerMode ? "register" : "login";
+
+      const data = {
+        username: username.value.trim().toLowerCase(),
+        password: password.value
+      };
+
+      if (registerMode) {
+        data.display_name = displayName.value.trim();
+      }
+
+      try {
+        const response = await fetch(
+          "/auth?action=" + action,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(data)
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result.error || "Xatolik yuz berdi"
+          );
+        }
+
+        if (registerMode) {
+          password.value = "";
+          setMode(false);
+          errorBox.style.color = "#86efac";
+          errorBox.textContent =
+            "Akkaunt yaratildi! Endi login qiling.";
+        } else {
+          window.location.href = "/";
+        }
+
+      } catch (error) {
+        errorBox.style.color = "#fca5a5";
+        errorBox.textContent = error.message;
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

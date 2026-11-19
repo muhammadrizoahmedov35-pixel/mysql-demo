@@ -44,24 +44,61 @@
   </div>
   
 <script>
+
 const input = document.getElementById("name");
 const list = document.getElementById("list");
 const button = document.querySelector("button");
 
-button.addEventListener("click", function () {
+async function loadNames() {
+  try {
+    const response = await fetch("/api");
+    if (!response.ok) throw new Error("Load failed");
+
+    const names = await response.json();
+    list.innerHTML = "";
+
+    names.forEach(item => {
+      const p = document.createElement("p");
+      p.textContent = item.name;
+      list.appendChild(p);
+    });
+  } catch (error) {
+    alert("Ismlarni yuklashda xatolik!");
+  }
+}
+
+button.addEventListener("click", async () => {
   const name = input.value.trim();
 
-  if (!name) {
-    alert("Iltimos, ismingizni kiriting!");
+  if (!name || name.length > 100) {
+    alert("1 dan 100 tagacha belgi kiriting!");
     return;
   }
 
-  const item = document.createElement("p");
-  item.textContent = name;
-  list.appendChild(item);
+  button.disabled = true;
 
-  input.value = "";
+  try {
+    const response = await fetch("/api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name })
+    });
+
+    if (!response.ok) throw new Error("Save failed");
+
+    input.value = "";
+    await loadNames();
+  } catch (error) {
+    alert("Ismni saqlashda xatolik!");
+  } finally {
+    button.disabled = false;
+  }
 });
+
+loadNames();
+
 </script>
   <!-- Redeploy -->
 

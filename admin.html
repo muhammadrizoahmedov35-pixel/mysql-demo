@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galaxy 3.0 — Admin</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #30205d, #0b0920 65%, #05040d);
+  color: white;
+  font-family: Arial, sans-serif;
+}
+main { max-width: 850px; margin: auto; padding: 22px 14px 60px; }
+header { text-align: center; margin-bottom: 25px; }
+h1 { color: #d8b4fe; }
+h2 { font-size: 20px; }
+.panel {
+  background: #161030;
+  border: 1px solid #594181;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.item {
+  background: #21183f;
+  border: 1px solid #45346e;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 12px 0;
+}
+.item-title { color: #d8b4fe; font-weight: bold; }
+.item-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0; }
+.meta { color: #b5a8d0; font-size: 12px; margin-top: 7px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+button, a.button {
+  border: none;
+  border-radius: 9px;
+  padding: 10px 13px;
+  color: white;
+  background: #7c3aed;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+button:disabled { opacity: .5; cursor: wait; }
+.danger { background: #a52a4b; }
+.secondary { background: #44335f; }
+.status { color: #c4b5fd; font-size: 14px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div style="font-size:52px">🛡️</div>
+    <h1>GALAXY ADMIN</h1>
+    <p class="status" id="identity">Tekshirilmoqda...</p>
+    <a class="button secondary" href="/messages.html">← Xabarlarga qaytish</a>
+  </header>
+
+  <section id="dashboard" class="hidden">
+    <section class="panel">
+      <h2>📊 Statistika</h2>
+      <p id="stats">Yuklanmoqda...</p>
+      <button id="refresh" class="secondary">🔄 Yangilash</button>
+    </section>
+
+    <section class="panel">
+      <h2>💬 Xabarlarni boshqarish</h2>
+      <div id="messages"></div>
+    </section>
+
+    <section class="panel">
+      <h2>👥 Foydalanuvchilar</h2>
+      <div id="users"></div>
+    </section>
+  </section>
+</main>
+
+<script>
+const identity = document.getElementById("identity");
+const dashboard = document.getElementById("dashboard");
+const messagesBox = document.getElementById("messages");
+const usersBox = document.getElementById("users");
+const stats = document.getElementById("stats");
+
+let myRole = "";
+let myUsername = "";
+
+async function api(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    cache: "no-store",
+    ...options
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Server xatosi");
+  }
+
+  return data;
+}
+
+async function postAction(action, data) {
+  return api("/admin-api?action=" + action, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+}
+
+function makeButton(text, className, callback) {
+  const button = document.createElement("button");
+  button.textContent = text;
+  button.className = className;
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      await callback();
+      await loadData();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  return button;
+}
+
+async function checkAdmin() {
+  try {
+    const result = await api("/auth?action=me");
+
+    if (!result.authenticated || !result.user) {
+      location.replace("/login.html");
+      return;
+    }
+
+    myRole = result.user.role;
+    myUsername = result.user.username;
+
+    if (!["admin", "superadmin"].includes(myRole)) {
+      identity.textContent = "⛔ Admin huquqi yo‘q";
+      return;
+    }
+
+    identity.textContent =
+      result.user.display_name + " • " + myRole;
+
+    dashboard.classList.remove("hidden");
+    await loadData();
+  } catch {
+    identity.textContent = "Login talab qilinadi yoki server xatosi";
+  }
+}
+
+async function loadData() {
+  try {
+    const [messages, users] = await Promise.all([
+      api("/admin-api?action=messages"),
+      api("/admin-api?action=users")
+    ]);
+
+    stats.textContent =
+      "Ko‘rsatilgan foydalanuvchilar: " + users.length +
+      " | Ko‘rsatilgan xabarlar: " + messages.length;
+
+    messagesBox.replaceChildren();
+    usersBox.replaceChildren();
+
+    if (!messages.length) {
+      messagesBox.textContent = "Xabarlar yo‘q.";
+    }
+
+    messages.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "item";
+
+      const title = document.createElement("div");
+      title.className = "item-title";
+      title.textContent = item.display_name + " (@" + item.username + ")";
+
+      const text = document.createElement("div");
+      text.className = "item-text";
+      text.textContent = item.message;
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      actions.appendChild(makeButton(
+        "🗑️ O‘chirish",
+        "danger",
+        async () => {
+          if (!confirm("Xabarni o‘chirasizmi?")) return;
+          await postAction("delete-message", { id: item.id });
+        }
+      ));
+
+      card.append(title, text, actions);
+      messagesBox.appendChild(card);
+    });
+
+    if (!users.length) {
+      usersBox.textContent = "Foydalanuvchilar yo‘q.";
+    }
+
+    users.forEach(user => {
+      const card = document.createElement("div");
+      card.className = "item";
+
+      const title = document.createElement("div");
+      title.className = "item-title";
+      title.textContent =
+        user.display_name + " (@" + user.username + ")";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent =
+        "Rol: " + user.role +
+        " | Holat: " + (user.is_blocked ? "Bloklangan" : "Faol");
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const isSelf = user.username === myUsername;
+      const canBlock = !isSelf &&
+        user.role !== "superadmin" &&
+        (myRole === "superadmin" || user.role === "user");
+
+      if (canBlock) {
+        actions.appendChild(makeButton(
+          user.is_blocked ? "✅ Blokdan chiqarish" : "🚫 Bloklash",
+          user.is_blocked ? "secondary" : "danger",
+          async () => {
+            const blocked = !Boolean(user.is_blocked);
+            if (!confirm(blocked
+              ? "Foydalanuvchini bloklaysizmi?"
+              : "Blokdan chiqarasizmi?")) return;
+
+            await postAction("block-user", {
+              id: user.id,
+              blocked
+            });
+          }
+        ));
+      }
+
+      if (myRole === "superadmin" &&
+          !isSelf && user.role !== "superadmin") {
+        actions.appendChild(makeButton(
+          user.role === "admin"
+            ? "⬇️ Adminlikni olish"
+            : "🛡️ Admin qilish",
+          "secondary",
+          async () => {
+            const role = user.role === "admin" ? "user" : "admin";
+            if (!confirm("Rolni " + role + " ga o‘zgartirasizmi?")) return;
+            await postAction("set-role", { id: user.id, role });
+          }
+        ));
+      }
+
+      card.append(title, meta, actions);
+      usersBox.appendChild(card);
+    });
+
+  } catch (error) {
+    stats.textContent = "Xatolik: " + error.message;
+  }
+}
+
+document.getElementById("refresh")
+  .addEventListener("click", loadData);
+
+checkAdmin();
+</script>
+</body>
+</html>

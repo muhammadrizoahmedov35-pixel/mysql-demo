@@ -309,6 +309,7 @@
 
         const names = await response.json();
         showGalaxy(names);
+        alert("Galaktikaga " + names.length + " ta mehmon yuklandi");
         list.innerHTML = "";
 
         if (names.length === 0) {

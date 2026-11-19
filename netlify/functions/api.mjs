@@ -1,7 +1,7 @@
 
 import mysql from "mysql2/promise";
 
-export default async (request) => {
+export default async (request, context) => {
   const headers = {
     "Content-Type": "application/json"
   };
@@ -28,6 +28,8 @@ if (request.method !== "GET" && request.method !== "POST") {
 if (request.method === "POST") {
   const body = await request.json();
   const name = body.name?.trim();
+  const country =
+  context.geo?.country?.name || "Unknown";
 
   if (!name || name.length > 100) {
     return new Response(
@@ -37,9 +39,9 @@ if (request.method === "POST") {
   }
 
   await db.execute(
-    "INSERT INTO notes (name) VALUES (?)",
-    [name]
-  );
+  "INSERT INTO notes (name, country) VALUES (?, ?)",
+  [name, country]
+);
 
   return new Response(
     JSON.stringify({ success: true }),
@@ -48,8 +50,8 @@ if (request.method === "POST") {
 }
 
     const [rows] = await db.execute(
-      "SELECT id, name, created_at FROM notes ORDER BY id DESC LIMIT 100"
-    );
+      "SELECT id, name, country, created_at FROM notes ORDER BY id DESC LIMIT 100"
+      );
 
     return new Response(
       JSON.stringify(rows),

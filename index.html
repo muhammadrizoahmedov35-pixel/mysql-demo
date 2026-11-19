@@ -3,117 +3,295 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-  <title>Mehmonlar kitobi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Galaxy Guestbook ✨</title>
   <style>
+    * { box-sizing: border-box; }
+
     body {
+      margin: 0;
+      min-height: 100vh;
       font-family: Arial, sans-serif;
-      background: #f0f4f8;
-      padding: 20px;
+      color: #f5f3ff;
+      background: #090d20;
+      overflow-x: hidden;
     }
-    .card {
-      background: white;
-      padding: 25px;
-      border-radius: 15px;
-      max-width: 450px;
-      margin: 40px auto;
+
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(2px 2px at 20% 30%, white 50%, transparent),
+        radial-gradient(2px 2px at 70% 20%, #b7a5ff 50%, transparent),
+        radial-gradient(2px 2px at 40% 75%, white 50%, transparent),
+        radial-gradient(2px 2px at 85% 65%, #a5f3fc 50%, transparent);
+      background-size: 230px 210px;
+      animation: drift 25s linear infinite;
+      opacity: .7;
+    }
+
+    @keyframes drift {
+      to { transform: translateY(-210px); }
+    }
+
+    .container {
+      position: relative;
+      max-width: 620px;
+      margin: auto;
+      padding: 25px 18px 60px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .live {
+      color: #66e6c5;
+      font-size: 12px;
+    }
+
+    .hero {
       text-align: center;
+      padding: 35px 0 25px;
     }
-    input, button {
-      padding: 12px;
-      width: 90%;
-      margin: 10px 0;
-      border-radius: 8px;
+
+    .planet {
+      position: relative;
+      width: 165px;
+      height: 165px;
+      margin: 15px auto 35px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 25%,
+        #d8b4fe, #8b5cf6 45%, #312e81 90%);
+      box-shadow: 0 0 70px #8b5cf680;
+      animation: float 5s ease-in-out infinite;
     }
-    button {
-      background: #2563eb;
+
+    .planet::after {
+      content: "";
+      position: absolute;
+      width: 230px;
+      height: 65px;
+      border: 9px solid #a5b4fc;
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      box-shadow: 0 0 20px #8b5cf680;
+    }
+
+    @keyframes float {
+      50% { transform: translateY(-12px); }
+    }
+
+    h1 {
+      font-size: clamp(29px, 7vw, 43px);
+      margin: 15px 0;
+      line-height: 1.15;
+    }
+
+    .subtitle { color: #a7b0d6; }
+
+    .card {
+      background: rgba(28, 36, 69, .85);
+      border: 1px solid #3c4676;
+      border-radius: 22px;
+      padding: 23px;
+      box-shadow: 0 20px 60px #0005;
+    }
+
+    input {
+      width: 100%;
+      padding: 17px;
+      border-radius: 13px;
+      border: 1px solid #485481;
+      background: #101831;
       color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus { border-color: #a78bfa; }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 13px;
       border: none;
+      border-radius: 13px;
+      color: white;
+      background: linear-gradient(120deg, #7c3aed, #a855f7);
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 5px 25px #8b5cf655;
+      transition: transform .2s;
+    }
+
+    button:active { transform: scale(.97); }
+    button:disabled { opacity: .6; }
+
+    h2 { margin-top: 35px; font-size: 22px; }
+
+    .guest {
+      background: rgba(23, 29, 57, .9);
+      border: 1px solid #343e6c;
+      border-radius: 16px;
+      padding: 17px;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .guest-name {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .guest-info {
+      font-size: 13px;
+      color: #a7b0d6;
+      line-height: 1.7;
+    }
+
+    .empty {
+      text-align: center;
+      color: #a7b0d6;
+      padding: 25px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stars, .planet { animation: none; }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Mehmonlar kitobi</h1>
-    <p>Ismingizni kiriting</p>
-    <input id="name" placeholder="Ismingiz">
-    <button>Saqlash</button>
-    <h3>Mehmonlar ro'yxati</h3>
-    <div id="list"></div>
-  </div>
-  
-<script>
+  <div class="stars"></div>
 
-const input = document.getElementById("name");
-const list = document.getElementById("list");
-const button = document.querySelector("button");
+  <main class="container">
+    <header>
+      <strong>✦ GALAXY BOOK</strong>
+      <span class="live">● LIVE</span>
+    </header>
 
-async function loadNames() {
-  try {
-    const response = await fetch("/api");
-    if (!response.ok) throw new Error("Load failed");
+    <section class="hero">
+      <div class="planet"></div>
+      <h1>Ismingizni koinotda qoldiring ✨</h1>
+      <p class="subtitle">
+        Har bir mehmon — yangi yulduz.
+      </p>
+    </section>
 
-    const names = await response.json();
-    list.innerHTML = "";
+    <section class="card">
+      <input
+        id="name"
+        maxlength="100"
+        placeholder="Ismingizni kiriting..."
+      >
+      <button id="save">🚀 Koinotga qo‘shilish</button>
+    </section>
 
-    names.forEach(item => {
-      const p = document.createElement("p");
-     const date = item.created_at
-  ? new Date(item.created_at).toLocaleString("uz-UZ", {
-      timeZone: "Europe/Istanbul",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    })
-  : "Sana noma'lum";
+    <h2>🌌 Galaktika mehmonlari</h2>
+    <div id="list">
+      <p class="empty">Mehmonlar yuklanmoqda...</p>
+    </div>
+  </main>
 
-p.textContent =
-  item.name + " 🌍 " + (item.country || "Unknown") +
-  " 📅 " + date;
-      list.appendChild(p);
+  <script>
+    const input = document.getElementById("name");
+    const list = document.getElementById("list");
+    const button = document.getElementById("save");
+
+    async function loadNames() {
+      try {
+        const response = await fetch("/api");
+        if (!response.ok) throw new Error("Load failed");
+
+        const names = await response.json();
+        list.innerHTML = "";
+
+        if (names.length === 0) {
+          list.innerHTML =
+            '<p class="empty">Hali mehmonlar yo‘q ✨</p>';
+          return;
+        }
+
+        names.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "guest";
+
+          const title = document.createElement("div");
+          title.className = "guest-name";
+          title.textContent = "✦ " + item.name;
+
+          const info = document.createElement("div");
+          info.className = "guest-info";
+
+          const date = item.created_at
+            ? new Date(item.created_at).toLocaleString(
+                "uz-UZ",
+                {
+                  timeZone: "Europe/Istanbul",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit"
+                }
+              )
+            : "Sana noma'lum";
+
+          info.textContent =
+            "🌍 " + (item.country || "Unknown") +
+            "  •  📅 " + date;
+
+          card.appendChild(title);
+          card.appendChild(info);
+          list.appendChild(card);
+        });
+      } catch (error) {
+        list.textContent =
+          "Mehmonlarni yuklashda xatolik yuz berdi.";
+      }
+    }
+
+    button.addEventListener("click", async () => {
+      const name = input.value.trim();
+
+      if (!name || name.length > 100) {
+        alert("1 dan 100 tagacha belgi kiriting!");
+        return;
+      }
+
+      button.disabled = true;
+
+      try {
+        const response = await fetch("/api", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name })
+        });
+
+        if (!response.ok) throw new Error("Save failed");
+
+        input.value = "";
+        await loadNames();
+      } catch (error) {
+        alert("Ismni saqlashda xatolik!");
+      } finally {
+        button.disabled = false;
+      }
     });
-  } catch (error) {
-    alert("Ismlarni yuklashda xatolik!");
-  }
-}
 
-button.addEventListener("click", async () => {
-  const name = input.value.trim();
-
-  if (!name || name.length > 100) {
-    alert("1 dan 100 tagacha belgi kiriting!");
-    return;
-  }
-
-  button.disabled = true;
-
-  try {
-    const response = await fetch("/api", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ name })
-    });
-
-    if (!response.ok) throw new Error("Save failed");
-
-    input.value = "";
-    await loadNames();
-  } catch (error) {
-    alert("Ismni saqlashda xatolik!");
-  } finally {
-    button.disabled = false;
-  }
-});
-
-loadNames();
-
-</script>
-  <!-- Redeploy -->
-
+    loadNames();
+  </script>
 </body>
 </html>
+

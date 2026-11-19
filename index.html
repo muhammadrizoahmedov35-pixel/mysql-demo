@@ -261,6 +261,45 @@
     const input = document.getElementById("name");
     const list = document.getElementById("list");
     const button = document.getElementById("save");
+    function showGalaxy(names) {
+  const galaxy = document.getElementById("galaxy");
+  if (!galaxy) return;
+
+  galaxy.innerHTML = "";
+
+  names.forEach((guest, index) => {
+    const star = document.createElement("button");
+    star.type = "button";
+    star.className = "galaxy-star";
+
+    // Yulduzlarni galaktika bo'ylab joylashtirish
+    const x = 8 + ((index * 37.7) % 84);
+    const y = 10 + ((index * 23.3) % 78);
+
+    star.style.left = x + "%";
+    star.style.top = y + "%";
+    star.style.animationDelay = (index % 7) * 0.3 + "s";
+
+    star.title = guest.name;
+    star.setAttribute("aria-label", guest.name);
+
+    star.addEventListener("click", () => {
+      const date = guest.created_at
+        ? new Date(guest.created_at).toLocaleString("uz-UZ", {
+            timeZone: "Europe/Istanbul"
+          })
+        : "Sana noma'lum";
+
+      alert(
+        "⭐ " + guest.name +
+        "\n🌍 " + (guest.country || "Unknown") +
+        "\n📅 " + date
+      );
+    });
+
+    galaxy.appendChild(star);
+  });
+}
 
     async function loadNames() {
       try {
@@ -268,6 +307,7 @@
         if (!response.ok) throw new Error("Load failed");
 
         const names = await response.json();
+        showGalaxy(names);
         list.innerHTML = "";
 
         if (names.length === 0) {

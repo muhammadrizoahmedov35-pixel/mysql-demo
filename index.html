@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -168,60 +167,6 @@
     @media (prefers-reduced-motion: reduce) {
       .stars, .planet { animation: none; }
     }
-   /* Galaxy 2.0 — Mehmonlar yulduzlari */
-
-#galaxy {
-  position: relative;
-  width: 100%;
-  height: 320px;
-  margin: 20px 0;
-  overflow: hidden;
-  border: 1px solid #414478;
-  border-radius: 22px;
-  background:
-    radial-gradient(ellipse at center,
-      #26245a 0%,
-      #11152e 55%,
-      #080b1b 100%);
-  box-shadow: inset 0 0 60px #6545ff22;
-}
-
-.galaxy-star {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border: 0;
-  border-radius: 50%;
-  background: #d8b4fe;
-  box-shadow:
-    0 0 10px #c084fc,
-    0 0 25px #8b5cf6;
-  cursor: pointer;
-  animation: twinkle 2.5s ease-in-out infinite alternate;
-}
-
-.galaxy-star:focus-visible {
-  outline: 2px solid white;
-  outline-offset: 5px;
-}
-
-@keyframes twinkle {
-  from {
-    opacity: 0.5;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.3);
-  }
-}
-
-#star-info {
-  padding: 12px;
-  text-align: center;
-  color: #ddd6fe;
-  font-size: 14px;
-} 
   </style>
 </head>
 <body>
@@ -251,7 +196,6 @@
     </section>
 
     <h2>🌌 Galaktika mehmonlari</h2>
-    <div id="galaxy"></div>
     <div id="list">
       <p class="empty">Mehmonlar yuklanmoqda...</p>
     </div>
@@ -261,46 +205,6 @@
     const input = document.getElementById("name");
     const list = document.getElementById("list");
     const button = document.getElementById("save");
-    function showGalaxy(names) {
-  const galaxy = document.getElementById("galaxy");
-  if (!galaxy) return;
-
-  galaxy.innerHTML = "";
-
-  names.forEach((guest, index) => {
-    const star = document.createElement("button");
-    star.type = "button";
-    star.className = "galaxy-star";
-    star.style.background = "red";
-
-    // Yulduzlarni galaktika bo'ylab joylashtirish
-    const x = 8 + ((index * 37.7) % 84);
-    const y = 10 + ((index * 23.3) % 78);
-
-    star.style.left = x + "%";
-    star.style.top = y + "%";
-    star.style.animationDelay = (index % 7) * 0.3 + "s";
-
-    star.title = guest.name;
-    star.setAttribute("aria-label", guest.name);
-
-    star.addEventListener("click", () => {
-      const date = guest.created_at
-        ? new Date(guest.created_at).toLocaleString("uz-UZ", {
-            timeZone: "Europe/Istanbul"
-          })
-        : "Sana noma'lum";
-
-      alert(
-        "⭐ " + guest.name +
-        "\n🌍 " + (guest.country || "Unknown") +
-        "\n📅 " + date
-      );
-    });
-
-    galaxy.appendChild(star);
-  });
-}
 
     async function loadNames() {
       try {
@@ -308,8 +212,6 @@
         if (!response.ok) throw new Error("Load failed");
 
         const names = await response.json();
-        showGalaxy(names);
-        alert("Galaktikaga " + names.length + " ta mehmon yuklandi");
         list.innerHTML = "";
 
         if (names.length === 0) {
@@ -391,4 +293,3 @@
   </script>
 </body>
 </html>
-

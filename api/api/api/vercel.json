@@ -1,0 +1,17 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/auth",
+      "destination": "/api/auth"
+    },
+    {
+      "source": "/messages",
+      "destination": "/api/messages"
+    },
+    {
+      "source": "/admin-api",
+      "destination": "/api/admin"
+    }
+  ]
+}
